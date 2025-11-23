@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="C:\Users\User\Desktop\2weit beverage designer\style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор напитков</title>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Purple+Purse&family=Raleway:ital,wght@0,100..900;1,100..900&family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Конструктор напитков</h1>
+            <p class="subtitle">Создайте свой уникальный напиток и рассчитайте пищевую ценность</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Левая колонка - Конструктор -->
+            <div class="constructor-section">
+                <h2>  Конструктор напитка</h2>
+                
+                <div class="category-tabs">
+                    <button class="category-tab active" data-category="all">Все</button>
+                    <button class="category-tab" data-category="base">Основа</button>
+                    <button class="category-tab" data-category="fruits">Фрукты</button>
+                    <button class="category-tab" data-category="syrups">Сиропы</button>
+                    <button class="category-tab" data-category="additives">Добавки</button>
+                </div>
+
+                <div class="ingredients-grid" id="ingredientsGrid">
+                    <!-- Ингредиенты будут добавлены через JavaScript -->
+                </div>
+
+                <div class="slider-container">
+                    <label>Объем напитка: <span id="volumeValue">300</span> мл</label>
+                    <input type="range" class="slider" id="volumeSlider" min="100" max="1000" value="300" step="50">
+                </div>
+
+                <div class="slider-container">
+                    <label>Сладость: <span id="sweetnessValue">5</span>/10</label>
+                    <input type="range" class="slider" id="sweetnessSlider" min="1" max="10" value="5">
+                </div>
+
+                <button class="btn" onclick="calculateNutrition()"> Рассчитать пищевую ценность</button>
+                <button class="btn btn-success" onclick="saveRecipe()"> Сохранить рецепт</button>
+                <button class="btn btn-danger" onclick="clearRecipe()"> Очистить</button>
+            </div>
+
+            <!-- Правая колонка - Рецепт и информация -->
+            <div class="recipe-section">
+                <h2> Ваш рецепт</h2>
+                
+                <div class="recipe-display" id="recipeDisplay">
+                    <p>Выберите ингредиенты для начала создания рецепта...</p>
+                </div>
+
+                <div class="nutrition-info">
+                    <h3> Пищевая ценность</h3>
+                    <div class="nutrition-grid">
+                        <div class="nutrition-item">
+                            <div> Калории</div>
+                            <div id="calories">0 ккал</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div> Белки</div>
+                            <div id="proteins">0 г</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div> Жиры</div>
+                            <div id="fats">0 г</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div> Углеводы</div>
+                            <div id="carbs">0 г</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="sugarProgress" style="width: 0%"></div>
+                    </div>
+                    <div>Сахар: <span id="sugar">0</span> г</div>
+                </div>
+
+                <div class="saved-recipes">
+                    <h3> Сохраненные рецепты</h3>
+                    <div id="savedRecipes">
+                        <p>Здесь будут сохраненные рецепты...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // База данных ингредиентов
+        const ingredients = [
+            // Основа
+            { id: 1, name: "Вода", category: "base", icon: "", calories: 0, proteins: 0, fats: 0, carbs: 0, sugar: 0 },
+            { id: 2, name: "Молоко", category: "base", icon: "", calories: 42, proteins: 3.4, fats: 1, carbs: 4.7, sugar: 4.7 },
+            { id: 3, name: "Йогурт", category: "base", icon: "", calories: 61, proteins: 3.5, fats: 3.3, carbs: 4.7, sugar: 4.7 },
+            { id: 4, name: "Сок апельсиновый", category: "base", icon: "", calories: 45, proteins: 0.7, fats: 0.2, carbs: 10.4, sugar: 8.4 },
+            
+            // Фрукты
+            { id: 5, name: "Клубника", category: "fruits", icon: "", calories: 32, proteins: 0.7, fats: 0.3, carbs: 7.7, sugar: 4.9 },
+            { id: 6, name: "Банан", category: "fruits", icon: "", calories: 89, proteins: 1.1, fats: 0.3, carbs: 22.8, sugar: 12.2 },
+            { id: 7, name: "Яблоко", category: "fruits", icon: "", calories: 52, proteins: 0.3, fats: 0.2, carbs: 13.8, sugar: 10.4 },
+            { id: 8, name: "Лимон", category: "fruits", icon: "", calories: 29, proteins: 1.1, fats: 0.3, carbs: 9.3, sugar: 2.5 },
+            
+            // Сиропы
+            { id: 9, name: "Клубничный сироп", category: "syrups", icon: "", calories: 260, proteins: 0, fats: 0, carbs: 65, sugar: 65 },
+            { id: 10, name: "Ванильный сироп", category: "syrups", icon: "", calories: 250, proteins: 0, fats: 0, carbs: 63, sugar: 63 },
+            { id: 11, name: "Шоколадный сироп", category: "syrups", icon: "", calories: 280, proteins: 2, fats: 3, carbs: 62, sugar: 58 },
+            { id: 12, name: "Карамельный сироп", category: "syrups", icon: "", calories: 270, proteins: 0, fats: 0, carbs: 67, sugar: 67 },
+            
+            // Добавки
+            { id: 13, name: "Мёд", category: "additives", icon: "", calories: 304, proteins: 0.3, fats: 0, carbs: 82.4, sugar: 82.1 },
+            { id: 14, name: "Протеин", category: "additives", icon: "", calories: 380, proteins: 75, fats: 5, carbs: 10, sugar: 3 },
+            { id: 15, name: "Овсяные хлопья", category: "additives", icon: "", calories: 389, proteins: 16.9, fats: 6.9, carbs: 66.3, sugar: 0.8 },
+            { id: 16, name: "Льняное семя", category: "additives", icon: "", calories: 534, proteins: 18.3, fats: 42.2, carbs: 28.9, sugar: 1.6 }
+        ];
+
+        let selectedIngredients = [];
+        let currentRecipe = null;
+
+        // Инициализация приложения
+        function init() {
+            renderIngredients();
+            setupEventListeners();
+            loadSavedRecipes();
+        }
+
+        // Рендеринг ингредиентов
+        function renderIngredients(category = 'all') {
+            const grid = document.getElementById('ingredientsGrid');
+            grid.innerHTML = '';
+
+            const filteredIngredients = category === 'all' 
+                ? ingredients 
+                : ingredients.filter(ing => ing.category === category);
+
+            filteredIngredients.forEach(ingredient => {
+                const isSelected = selectedIngredients.some(sel => sel.id === ingredient.id);
+                const card = document.createElement('div');
+                card.className = `ingredient-card ${isSelected ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="ingredient-icon">${ingredient.icon}</div>
+                    <div class="ingredient-name">${ingredient.name}</div>
+                `;
+                card.onclick = () => toggleIngredient(ingredient);
+                grid.appendChild(card);
+            });
+        }
+
+        // Переключение выбора ингредиента
+        function toggleIngredient(ingredient) {
+            const index = selectedIngredients.findIndex(sel => sel.id === ingredient.id);
+            
+            if (index === -1) {
+                selectedIngredients.push({...ingredient, amount: 50});
+            } else {
+                selectedIngredients.splice(index, 1);
+            }
+            
+            updateRecipeDisplay();
+            renderIngredients(getCurrentCategory());
+        }
+
+        // Получение текущей категории
+        function getCurrentCategory() {
+            const activeTab = document.querySelector('.category-tab.active');
+            return activeTab ? activeTab.dataset.category : 'all';
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Табы категорий
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    renderIngredients(tab.dataset.category);
+                });
+            });
+
+            // Слайдер объема
+            document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                document.getElementById('volumeValue').textContent = e.target.value;
+                updateRecipeDisplay();
+            });
+
+            // Слайдер сладости
+            document.getElementById('sweetnessSlider').addEventListener('input', (e) => {
+                document.getElementById('sweetnessValue').textContent = e.target.value;
+            });
+        }
+
+        // Обновление отображения рецепта
+        function updateRecipeDisplay() {
+            const display = document.getElementById('recipeDisplay');
+            
+            if (selectedIngredients.length === 0) {
+                display.innerHTML = '<p>Выберите ингредиенты для начала создания рецепта...</p>';
+                return;
+            }
+
+            let html = '<h4>Состав вашего напитка:</h4><ul class="ingredient-list">';
+            
+            selectedIngredients.forEach(ingredient => {
+                html += `<li>${ingredient.icon} ${ingredient.name} - 50 мл</li>`;
+            });
+
+            html += `</ul><p><strong>Общий объем: ${document.getElementById('volumeSlider').value} мл</strong></p>`;
+            display.innerHTML = html;
+        }
+
+        // Расчет пищевой ценности
+        function calculateNutrition() {
+            if (selectedIngredients.length === 0) {
+                alert('Добавьте хотя бы один ингредиент!');
+                return;
+            }
+
+            const volume = parseInt(document.getElementById('volumeSlider').value);
+            const sweetness = parseInt(document.getElementById('sweetnessSlider').value);
+            
+            let totalCalories = 0;
+            let totalProteins = 0;
+            let totalFats = 0;
+            let totalCarbs = 0;
+            let totalSugar = 0;
+
+            // Расчет на основе выбранных ингредиентов
+            selectedIngredients.forEach(ingredient => {
+                const proportion = 50 / volume; // Предполагаем 50 мл каждого ингредиента
+                
+                totalCalories += ingredient.calories * proportion;
+                totalProteins += ingredient.proteins * proportion;
+                totalFats += ingredient.fats * proportion;
+                totalCarbs += ingredient.carbs * proportion;
+                totalSugar += ingredient.sugar * proportion;
+            });
+
+            // Корректировка по сладости
+            const sweetnessMultiplier = sweetness / 5;
+            totalSugar *= sweetnessMultiplier;
+            totalCarbs = totalCarbs - (totalSugar / sweetnessMultiplier) + totalSugar;
+
+            // Обновление интерфейса
+            document.getElementById('calories').textContent = Math.round(totalCalories) + ' ккал';
+            document.getElementById('proteins').textContent = Math.round(totalProteins * 10) / 10 + ' г';
+            document.getElementById('fats').textContent = Math.round(totalFats * 10) / 10 + ' г';
+            document.getElementById('carbs').textContent = Math.round(totalCarbs * 10) / 10 + ' г';
+            document.getElementById('sugar').textContent = Math.round(totalSugar * 10) / 10 + ' г';
+
+            // Прогресс-бар сахара (максимум 50г на порцию)
+            const sugarPercentage = Math.min((totalSugar / 50) * 100, 100);
+            document.getElementById('sugarProgress').style.width = sugarPercentage + '%';
+
+            // Сохранение текущего рецепта
+            currentRecipe = {
+                ingredients: [...selectedIngredients],
+                volume: volume,
+                sweetness: sweetness,
+                nutrition: {
+                    calories: Math.round(totalCalories),
+                    proteins: Math.round(totalProteins * 10) / 10,
+                    fats: Math.round(totalFats * 10) / 10,
+                    carbs: Math.round(totalCarbs * 10) / 10,
+                    sugar: Math.round(totalSugar * 10) / 10
+                },
+                timestamp: new Date().toLocaleString()
+            };
+        }
+
+        // Сохранение рецепта
+        function saveRecipe() {
+            if (!currentRecipe) {
+                alert('Сначала рассчитайте пищевую ценность!');
+                return;
+            }
+
+            const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+            savedRecipes.push({
+                ...currentRecipe,
+                id: Date.now(),
+                name: `Рецепт от ${new Date().toLocaleDateString()}`
+            });
+
+            localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+            loadSavedRecipes();
+            alert('Рецепт сохранен!');
+        }
+
+        // Загрузка сохраненных рецептов
+        function loadSavedRecipes() {
+            const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+            const container = document.getElementById('savedRecipes');
+
+            if (savedRecipes.length === 0) {
+                container.innerHTML = '<p>Здесь будут сохраненные рецепты...</p>';
+                return;
+            }
+
+            let html = '';
+            savedRecipes.forEach(recipe => {
+                html += `
+                    <div class="recipe-item">
+                        <h4>${recipe.name}</h4>
+                        <p><strong>Объем:</strong> ${recipe.volume} мл</p>
+                        <p><strong>Калории:</strong> ${recipe.nutrition.calories} ккал</p>
+                        <button class="btn" onclick="loadRecipe(${recipe.id})">📖 Загрузить</button>
+                        <button class="btn btn-danger" onclick="deleteRecipe(${recipe.id})">🗑️ Удалить</button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Загрузка рецепта
+        function loadRecipe(recipeId) {
+            const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+            const recipe = savedRecipes.find(r => r.id === recipeId);
+            
+            if (recipe) {
+                selectedIngredients = [...recipe.ingredients];
+                document.getElementById('volumeSlider').value = recipe.volume;
+                document.getElementById('volumeValue').textContent = recipe.volume;
+                document.getElementById('sweetnessSlider').value = recipe.sweetness;
+                document.getElementById('sweetnessValue').textContent = recipe.sweetness;
+                
+                updateRecipeDisplay();
+                renderIngredients(getCurrentCategory());
+                
+                // Обновляем nutritional info
+                document.getElementById('calories').textContent = recipe.nutrition.calories + ' ккал';
+                document.getElementById('proteins').textContent = recipe.nutrition.proteins + ' г';
+                document.getElementById('fats').textContent = recipe.nutrition.fats + ' г';
+                document.getElementById('carbs').textContent = recipe.nutrition.carbs + ' г';
+                document.getElementById('sugar').textContent = recipe.nutrition.sugar + ' г';
+                
+                const sugarPercentage = Math.min((recipe.nutrition.sugar / 50) * 100, 100);
+                document.getElementById('sugarProgress').style.width = sugarPercentage + '%';
+                
+                currentRecipe = recipe;
+            }
+        }
+
+        // Удаление рецепта
+        function deleteRecipe(recipeId) {
+            if (confirm('Удалить этот рецепт?')) {
+                const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+                const filteredRecipes = savedRecipes.filter(r => r.id !== recipeId);
+                localStorage.setItem('savedRecipes', JSON.stringify(filteredRecipes));
+                loadSavedRecipes();
+            }
+        }
+
+        // Очистка рецепта
+        function clearRecipe() {
+            selectedIngredients = [];
+            currentRecipe = null;
+            updateRecipeDisplay();
+            renderIngredients(getCurrentCategory());
+            
+            // Сброс nutritional info
+            document.getElementById('calories').textContent = '0 ккал';
+            document.getElementById('proteins').textContent = '0 г';
+            document.getElementById('fats').textContent = '0 г';
+            document.getElementById('carbs').textContent = '0 г';
+            document.getElementById('sugar').textContent = '0 г';
+            document.getElementById('sugarProgress').style.width = '0%';
+        }
+
+        // Инициализация при загрузке
+        window.onload = init;
+    </script>
+</body>
+</html>
